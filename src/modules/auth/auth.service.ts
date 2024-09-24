@@ -42,20 +42,15 @@ export default class AuthService {
   }
 
   public async login(payload: LoginPayload): Promise<JwtTokenDto> {
-    const [accessToken, refreshToken] = await Promise.all([
+    const [accessToken] = await Promise.all([
       this.jwtService.signAsync(payload, {
         secret: this.configService.getString('JWT_ACCESS_SECRET'),
         expiresIn: this.configService.getNumber('JWT_ACCESS_EXPIRATION_TIME'),
       }),
-      this.jwtService.signAsync(payload, {
-        secret: this.configService.getString('JWT_REFRESH_SECRET'),
-        expiresIn: this.configService.getNumber('JWT_REFRESH_EXPIRATION_TIME'),
-      }),
     ]);
 
     return {
-      accessToken,
-      refreshToken,
+      token: accessToken,
     };
   }
 

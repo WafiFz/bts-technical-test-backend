@@ -4,10 +4,5 @@ export default class JwtTokenDto {
   @ApiProperty({
     type: String,
   })
-  readonly accessToken: string = '';
-
-  @ApiProperty({
-    type: String,
-  })
-  readonly refreshToken: string = '';
+  readonly token: string = '';
 }

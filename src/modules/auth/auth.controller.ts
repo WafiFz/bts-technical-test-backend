@@ -23,7 +23,7 @@ import { User } from '@prisma/client';
 @ApiTags('Auth')
 @ApiExtraModels(JwtTokenDto)
 @UseInterceptors(WrapResponseInterceptor)
-@Controller('auth')
+@Controller('')
 export default class AuthController {
   constructor(
     private readonly authService: AuthService,
@@ -52,7 +52,7 @@ export default class AuthController {
 
   @ApiBody({ type: SignupDto })
   @HttpCode(HttpStatus.CREATED)
-  @Post('signup')
+  @Post('register')
   async signup(@Body() user: SignupDto): Promise<User> {
     return this.userService.create(user);
   }

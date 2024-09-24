@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import PrismaService from '../prisma/prisma.service';
 import { CreateChecklistItemDto } from './dto/create-checklist-item.dto';
 import { UpdateChecklistItemDto } from './dto/update-checklist-item.dto';
@@ -8,12 +12,16 @@ export class ChecklistItemService {
   constructor(private prisma: PrismaService) {}
 
   async getAllChecklistItems(checklistId: number, userId: string) {
-    return this.prisma.checklistItem.findMany({
-      where: {
-        checklistId,
-        checklist: { userId },
-      },
-    });
+    try {
+      return await this.prisma.checklistItem.findMany({
+        where: {
+          checklistId,
+          checklist: { userId },
+        },
+      });
+    } catch (error) {
+      throw new BadRequestException('Failed to retrieve checklist items');
+    }
   }
 
   async createChecklistItem(
@@ -21,13 +29,17 @@ export class ChecklistItemService {
     createChecklistItemDto: CreateChecklistItemDto,
     userId: string,
   ) {
-    await this.validateChecklistOwnership(checklistId, userId);
-    return this.prisma.checklistItem.create({
-      data: {
-        ...createChecklistItemDto,
-        checklistId,
-      },
-    });
+    try {
+      await this.validateChecklistOwnership(checklistId, userId);
+      return await this.prisma.checklistItem.create({
+        data: {
+          ...createChecklistItemDto,
+          checklistId,
+        },
+      });
+    } catch (error) {
+      throw new BadRequestException('Failed to create checklist item');
+    }
   }
 
   async getChecklistItem(
@@ -35,13 +47,20 @@ export class ChecklistItemService {
     checklistItemId: number,
     userId: string,
   ) {
-    await this.validateChecklistOwnership(checklistId, userId);
-    return this.prisma.checklistItem.findFirst({
-      where: {
-        id: checklistItemId,
-        checklistId,
-      },
-    });
+    try {
+      await this.validateChecklistOwnership(checklistId, userId);
+      const item = await this.prisma.checklistItem.findFirst({
+        where: {
+          id: checklistItemId,
+          checklistId,
+        },
+      });
+      if (!item) throw new NotFoundException('Checklist item not found');
+      return item;
+    } catch (error) {
+      if (error instanceof NotFoundException) throw error;
+      throw new BadRequestException('Failed to retrieve checklist item');
+    }
   }
 
   async updateChecklistItemStatus(
@@ -49,15 +68,21 @@ export class ChecklistItemService {
     checklistItemId: number,
     userId: string,
   ) {
-    await this.validateChecklistOwnership(checklistId, userId);
-    const checklistItem = await this.prisma.checklistItem.findFirst({
-      where: { id: checklistItemId, checklistId },
-    });
-    if (!checklistItem) throw new NotFoundException('Checklist item not found');
-    return this.prisma.checklistItem.update({
-      where: { id: checklistItemId },
-      data: { isChecked: !checklistItem.isChecked },
-    });
+    try {
+      await this.validateChecklistOwnership(checklistId, userId);
+      const checklistItem = await this.prisma.checklistItem.findFirst({
+        where: { id: checklistItemId, checklistId },
+      });
+      if (!checklistItem)
+        throw new NotFoundException('Checklist item not found');
+      return await this.prisma.checklistItem.update({
+        where: { id: checklistItemId },
+        data: { isChecked: !checklistItem.isChecked },
+      });
+    } catch (error) {
+      if (error instanceof NotFoundException) throw error;
+      throw new BadRequestException('Failed to update checklist item status');
+    }
   }
 
   async deleteChecklistItem(
@@ -65,10 +90,19 @@ export class ChecklistItemService {
     checklistItemId: number,
     userId: string,
   ) {
-    await this.validateChecklistOwnership(checklistId, userId);
-    return this.prisma.checklistItem.delete({
-      where: { id: checklistItemId },
-    });
+    try {
+      await this.validateChecklistOwnership(checklistId, userId);
+      const checklistItem = await this.prisma.checklistItem.findFirst({
+        where: { id: checklistItemId, checklistId },
+      });
+      if (!checklistItem)
+        throw new NotFoundException('Checklist item not found');
+      return await this.prisma.checklistItem.delete({
+        where: { id: checklistItemId },
+      });
+    } catch (error) {
+      return error;
+    }
   }
 
   async renameChecklistItem(
@@ -77,11 +111,20 @@ export class ChecklistItemService {
     updateChecklistItemDto: UpdateChecklistItemDto,
     userId: string,
   ) {
-    await this.validateChecklistOwnership(checklistId, userId);
-    return this.prisma.checklistItem.update({
-      where: { id: checklistItemId },
-      data: updateChecklistItemDto,
-    });
+    try {
+      await this.validateChecklistOwnership(checklistId, userId);
+      const checklistItem = await this.prisma.checklistItem.findFirst({
+        where: { id: checklistItemId, checklistId },
+      });
+      if (!checklistItem)
+        throw new NotFoundException('Checklist item not found');
+      return await this.prisma.checklistItem.update({
+        where: { id: checklistItemId },
+        data: updateChecklistItemDto,
+      });
+    } catch (error) {
+      return error;
+    }
   }
 
   private async validateChecklistOwnership(

@@ -40,7 +40,7 @@ async function bootstrap() {
 
   const options = new DocumentBuilder()
     .setTitle('Api v1')
-    .setDescription('The boilerplate API for nestjs devs')
+    .setDescription('API for checklist')
     .setVersion('1.0')
     .addBearerAuth({ in: 'header', type: 'http' })
     .build();
@@ -48,11 +48,18 @@ async function bootstrap() {
 
   SwaggerModule.setup('api', app, document);
 
-  await app.listen(port, async () => {
-    console.log(
-      `The server is running on ${port} port: http://localhost:${port}/api`,
-    );
-  });
+  const isProduction = configService.isProduction;
+
+  app.enableCors();
+  if (isProduction) {
+    await app.listen(3000, '0.0.0.0');
+  } else {
+    await app.listen(port, async () => {
+      console.log(
+        `The server is running on ${port} port: http://localhost:${port}/api`,
+      );
+    });
+  }
 }
 
 bootstrap();

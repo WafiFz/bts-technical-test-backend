@@ -8,6 +8,7 @@ import UserModule from '@/modules/user/user.module';
 import AuthModule from '@/modules/auth/auth.module';
 import PrismaModule from '@/modules/prisma/prisma.module';
 import { ChecklistModule } from './modules/checklist/checklist.module';
+import { ChecklistItemModule } from './modules/checklist-item/checklist-item.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { ChecklistModule } from './modules/checklist/checklist.module';
     AuthModule,
     PrismaModule,
     ChecklistModule,
+    ChecklistItemModule,
   ],
 })
 export default class AppModule {}
